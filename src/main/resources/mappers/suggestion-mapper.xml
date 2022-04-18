@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="Suggestion">
+	
+	<resultMap type="Suggestion" id="SuggestionResultMap">
+		<id property="suggestionKey" column="SUGGESTION_KEY"></id>
+		<result property="suggestionTitle" column="SUGGESTION_TITLE"></result>
+		<result property="suggestionContent" column="SUGGESTION_CONTENT"></result>
+		<result property="suggestionEnrollDate" column="SUGGESTION_ENROLL_DATE"></result>
+		<result property="suggestionCount" column="SUGGESTION_COUNT"></result>
+		<result property="memberId" column="MEMBER_ID"></result>
+		<result property="answerCheck" column="ANSWER_CHECK"></result>
+	</resultMap>
+	
+	<resultMap type="Answer" id="AnswerResultMap">
+		<id property="answerKey" column="ANSWER_KEY"></id>
+		<result property="answerTitle" column="ANSWER_TITLE"></result>
+		<result property="answerContent" column="ANSWER_CONTENT"></result>
+		<result property="answerEnrollDate" column="ANSWER_ENROLL_DATE"></result>
+		<result property="suggestionKey" column="SUGGESTION_KEY"></result>
+	</resultMap>
+	
+	<select id="getSugListCount" resultType="int">
+		SELECT COUNT(*) FROM SUGGESTION 
+	</select>
+	
+	<select id="getSearchList" resultType="int">
+		SELECT COUNT(*) FROM SUGGESTION
+		<where>
+			<if test="searchCondition.toString() == '제목'">
+				SUGGESTION_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				SUGGESTION_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectList" resultMap="SuggestionResultMap">
+		SELECT * FROM SUGGESTION ORDER BY  SUGGESTION_KEY DESC
+	</select>
+	
+	<insert id="insertSug">
+		INSERT INTO SUGGESTION VALUES
+		(SEQ_SUGKEY.NEXTVAL, #{suggestionTitle}, #{suggestionContent}, SYSDATE, #{suggestionCount}, #{memberId}, #{answerCheck})
+	</insert>
+	
+	<update id="sugHitsCount">
+		UPDATE SUGGESTION SET
+		SUGGESTION_COUNT = SUGGESTION_COUNT + 1
+		WHERE SUGGESTION_KEY = #{suggestionKey} 
+	</update>
+	
+	<select id="selectOne" resultMap="SuggestionResultMap">
+		SELECT * FROM SUGGESTION
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</select>
+	
+	<update id="updateSug">
+		UPDATE SUGGESTION SET
+		SUGGESTION_TITLE = #{suggestionTitle}, SUGGESTION_CONTENT = #{suggestionContent}
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</update>
+	
+	
+	<delete id="deleteSug">
+		DELETE FROM SUGGESTION
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</delete>
+	
+	<select id="searchSugList" resultMap="SuggestionResultMap">
+		SELECT * FROM SUGGESTION
+		<where>
+			<if test="searchCondition.toString() == '제목'">
+				SUGGESTION_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				SUGGESTION_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+		ORDER BY SUGGESTION_KEY DESC
+	</select>
+	
+	<insert id="insertAnswer">
+		INSERT INTO ANSWER VALUES
+		(SEQ_ANSKEY.NEXTVAL, #{answerTitle}, #{answerContent}, SYSDATE, #{suggestionKey})
+	</insert>
+	
+	<select id="selectAnswer" resultMap="AnswerResultMap">
+		SELECT * FROM ANSWER
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</select>
+	
+	<update id="updateAnswer">
+		UPDATE ANSWER SET
+		ANSWER_TITLE = #{answerTitle}, ANSWER_CONTENT = #{answerContent}, ANSWER_ENROLL_DATE = SYSDATE
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</update>
+	
+	<delete id="deleteAnswer">
+		DELETE FROM ANSWER
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</delete>
+	
+	<update id="updateOne">
+		UPDATE SUGGESTION SET
+		ANSWER_CHECK = 1
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</update>
+	
+	<update id="updateZero">
+		UPDATE SUGGESTION SET
+		ANSWER_CHECK = 0
+		WHERE SUGGESTION_KEY = #{suggestionKey}
+	</update>
+
+</mapper>

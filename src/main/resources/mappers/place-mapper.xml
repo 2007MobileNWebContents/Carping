@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="PlaceMapper">
+	
+	<resultMap type="Place" id="PlaceResultMap">
+		<id property="placeKey" column="PLACE_KEY"/>
+		<result property="placeName" column="PLACE_NAME"/>
+		<result property="placeAddress" column="PLACE_ADDRESS"/>
+		<result property="placeGeoCode" column="PLACE_GEOCODE"/>
+		<result property="placeGS25" column="PLACE_GS25"/>
+		<result property="placeToilet" column="PLACE_TOILET"/>
+		<result property="placeParking" column="PLACE_PARKING"/>
+		<result property="placeImage" column="PLACE_IMAGE"/>
+		<result property="placeEtc" column="PLACE_ETC"/>
+	</resultMap>
+	
+	<resultMap type="PlaceReview" id="PlaceReviewResultMap">
+		<id property="prKey" column="PR_KEY"/>
+		<result property="placeKey" column="PLACE_KEY"/>
+		<result property="prScore" column="PR_SCORE"/>
+		<result property="prTitle" column="PR_TITLE"/>
+		<result property="prContent" column="PR_CONTENT"/>
+		<result property="prRegDate" column="PR_REGDATE"/>
+		<result property="prHits" column="PR_HITS"/>
+		<result property="prPhoto" column="PR_PHOTO"/>
+		<result property="memberId" column="MEMBER_ID"/>
+	</resultMap>
+	
+	<resultMap type="PlaceReviewComment" id="PlaceReviewCommentResultMap">
+		<id property="prcKey" column="PRC_KEY"/>
+		<result property="prcContent" column="PRC_CONTENT"/>
+		<result property="prKey" column="PR_KEY"/>
+		<result property="prcWriter" column="PRC_WRITER"/>
+		<result property="prcRegDate" column="PRC_REGDATE"/>
+	</resultMap>
+
+	<select id="selectAll" resultMap="PlaceResultMap">
+		SELECT * FROM PLACE
+	</select>
+	
+	<select id="searchList" resultMap="PlaceResultMap">
+		SELECT * FROM PLACE
+		<where>
+			<if test="searchCondition.toString() == '명소이름'">
+				PLACE_NAME LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '주소'">
+				PLACE_ADDRESS LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectPlaceReviewList" resultMap="PlaceReviewResultMap">
+		SELECT * FROM PLACE_REVIEW
+		WHERE PLACE_KEY = #{placeKey} ORDER BY PR_KEY DESC
+	</select>
+	
+	<insert id="insertPlaceReview">
+		INSERT INTO PLACE_REVIEW
+		VALUES(SEQ_PRKEY.NEXTVAL, #{placeKey}, #{prScore}, #{prTitle}, #{prContent}, SYSDATE, #{prHits}, #{prPhoto,jdbcType=VARCHAR}, #{memberId})
+	</insert>
+	
+	<select id="selectOne" resultMap="PlaceResultMap">
+		SELECT * FROM PLACE
+		WHERE PLACE_KEY = #{placeKey}
+	</select>
+	
+	<select id="PlaceReviewDetail" resultMap="PlaceReviewResultMap">
+		SELECT * FROM PLACE_REVIEW
+		WHERE PR_KEY = #{prKey}
+	</select>
+	
+	<insert id="prCommentAdd">
+		INSERT INTO PLACE_REVIEW_COMMENT
+		VALUES(SEQ_PRCKEY.NEXTVAL, #{prcContent}, #{prKey}, #{prcWriter}, SYSDATE) 
+	</insert>
+	
+	<select id="prCommentList" resultMap="PlaceReviewCommentResultMap">
+		SELECT * FROM PLACE_REVIEW_COMMENT
+		WHERE PR_KEY = #{prKey}
+		ORDER BY PRC_KEY DESC
+	</select>
+	
+	<delete id="deletePlaceReview">
+		DELETE FROM PLACE_REVIEW
+		WHERE PR_KEY = #{prKey}
+	</delete>
+	
+	<update id="updatePlaceReview">
+		UPDATE PLACE_REVIEW SET
+		PR_SCORE = #{prScore}, PR_TITLE = #{prTitle}, PR_CONTENT = #{prContent}, PR_REGDATE = SYSDATE, PR_PHOTO = #{prPhoto,jdbcType=VARCHAR}, MEMBER_ID = #{memberId}
+		WHERE PR_KEY = #{prKey}
+	</update>
+	
+	<delete id="prCommentDelete">
+		DELETE FROM PLACE_REVIEW_COMMENT
+		WHERE PRC_KEY = #{prcKey}
+	</delete>
+	
+	<select id="getplaceReviewListCount" resultType="int">
+		SELECT COUNT(*) FROM PLACE_REVIEW
+		WHERE PLACE_KEY = #{placeKey}
+	</select>
+	
+	<select id="getplaceListCount" resultType="int">
+		SELECT COUNT(*) FROM PLACE
+		<where>
+			<if test="searchCondition.toString() == '명소이름'">
+				PLACE_NAME LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '주소'">
+				PLACE_ADDRESS LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+	</select>
+	
+	<select id="searchBoardList" resultMap="PlaceReviewResultMap">
+		SELECT * FROM PLACE_REVIEW
+		<where> PLACE_KEY = #{placeKey} AND
+			<if test="searchCondition.toString() == '제목'">
+				PR_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				PR_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+		ORDER BY PR_KEY DESC
+	</select>
+	
+	<select id="searchBoardListCount" resultType="int">
+		SELECT COUNT(*) FROM PLACE_REVIEW
+		<where> PLACE_KEY = #{placeKey} AND
+			<if test="searchCondition.toString() == '제목'">
+				PR_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				PR_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+	</select>
+	
+	<update id="placeReviewHits">
+		UPDATE PLACE_REVIEW SET
+		PR_HITS = PR_HITS + 1
+		WHERE PR_KEY = #{prKey}
+	</update>
+	
+	<!--ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 여기서부터 명소(Place) 관련 ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ-->
+	
+	<select id="selectPlace" resultMap="PlaceResultMap">
+		SELECT * FROM PLACE
+		WHERE PLACE_NAME = #{placeName}
+	</select>
+	
+	<select id="selectPrList" resultMap="PlaceReviewResultMap">
+		SELECT * FROM PLACE_REVIEW
+		WHERE PLACE_KEY = #{placeKey} AND 3>=ROWNUM
+		ORDER BY PR_KEY DESC
+	</select>
+	
+	<select id="selectPlaceAvg" resultType="double">
+		SELECT ROUND(AVG(PR_SCORE),1) FROM PLACE_REVIEW
+		WHERE PLACE_KEY = #{placeKey}
+	</select>
+	
+	<insert id="insertPlace">
+		INSERT INTO PLACE
+		VALUES(SEQ_PKEY.NEXTVAL, #{placeName}, #{placeAddress}, #{placeGeoCode}, #{placeGS25}, #{placeToilet}, #{placeParking}, #{placeImage}, #{placeEtc}, DEFAULT)
+	</insert>
+	
+	
+</mapper>

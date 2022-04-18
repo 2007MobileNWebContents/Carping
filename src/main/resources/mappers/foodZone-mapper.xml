@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="FoodZoneMapper">
+	
+	<resultMap type="FoodZone" id="FoodZoneResultMap">
+		<id property="foodZoneKey" column="FOODZONE_KEY"/>
+		<result property="foodZoneName" column="FOODZONE_NAME"/>
+		<result property="foodZoneAddress" column="FOODZONE_ADDRESS"/>
+		<result property="foodZoneGeoCode" column="FOODZONE_GEOCODE"/>
+		<result property="foodZonePhone" column="FOODZONE_PHONE"/>
+		<result property="foodZoneImage" column="FOODZONE_IMAGE"/>
+		<result property="foodZoneEtc" column="FOODZONE_ETC"/>
+		<result property="scoreAvg" column="SCOREAVG"/>
+		<result property="takeOutStatus" column="TAKEOUT_STATUS"/>
+	</resultMap>
+
+	<resultMap type="FoodZoneReview" id="FoodZoneReviewResultMap">
+		<id property="frKey" column="FR_KEY"/>
+		<result property="foodZoneKey" column="FOODZONE_KEY"/>
+		<result property="frScore" column="FR_SCORE"/>
+		<result property="frTitle" column="FR_TITLE"/>
+		<result property="frContent" column="FR_CONTENT"/>
+		<result property="frRegDate" column="FR_REGDATE"/>
+		<result property="frHits" column="FR_HITS"/>
+		<result property="frPhoto" column="FR_PHOTO"/>
+		<result property="memberId" column="MEMBER_ID"/>
+	</resultMap>
+	
+	<resultMap type="TakeOut" id="TakeOutResultMap">
+		<id property="takeOutKey" column="TAKEOUT_KEY"/>
+		<result property="foodZoneKey" column="FOODZONE_KEY"/>
+		<result property="takeOutMenu" column="TAKEOUT_MENU"/>
+		<result property="takeOutMenuPrice" column="TAKEOUT_MENU_PRICE"/>
+		<result property="takeOutMenuPhoto" column="TAKEOUT_MENU_PHOTO"/>
+	</resultMap>
+	
+	<resultMap type="TakeOutReserve" id="TakeOutReserveResultMap">
+		<id property="torKey" column="TOR_KEY"/>
+		<result property="memberId" column="MEMBER_ID"/>
+		<result property="takeOutKey" column="TAKEOUT_KEY"/>
+		<result property="torEa" column="TOR_EA"/>
+		<result property="torPrice" column="TOR_PRICE"/>
+		<result property="torRegDate" column="TOR_REGDATE"/>
+		<result property="torTotalPrice" column="TOR_TOTALPRICE"/>
+		<result property="foodZoneKey" column="FOODZONE_KEY"/>
+	</resultMap>
+	<resultMap type="foodZoneReviewComment" id="foodZoneReviewCommentResultMap">
+		<id property="frcKey" column="FRC_KEY"/>
+		<result property="frcContent" column="FRC_CONTENT"/>
+		<result property="frKey" column="FR_KEY"/>
+		<result property="frcWriter" column="FRC_WRITER"/>
+		<result property="frcRegDate" column="FRC_REGDATE"/>
+	</resultMap>
+	<resultMap type="Tor" id="TorResultMap">
+      <result property="takeOutMenu" column="TAKEOUT_MENU"/>
+      <result property="torEa" column="TOR_EA"/>
+      <result property="torPrice" column="TOR_PRICE"/>
+      <result property="torRegDate" column="TOR_REGDATE"/>
+      <result property="torTotalPrice" column="TOR_TOTALPRICE"/>
+   </resultMap>
+	
+	<select id="selectAll" resultMap="FoodZoneResultMap">
+		SELECT * FROM FOODZONE
+	</select>
+	
+	<select id="selectOneFoodZone" resultMap="FoodZoneResultMap">
+		SELECT * FROM FOODZONE WHERE FOODZONE_NAME = #{foodZoneName}
+	</select>
+	<select id="getListCount" resultType="int">
+		SELECT COUNT(*) FROM FOOD_REVIEW WHERE	FOODZONE_KEY = #{foodZoneKey}
+	</select>
+	<select id="selectReviewList" resultMap="FoodZoneReviewResultMap">
+		SELECT * FROM (select * from FOOD_REVIEW ORDER BY 6 DESC) WHERE FOODZONE_KEY = #{foodZoneKey} AND 3>=ROWNUM
+	</select>
+
+	<select id="selectFoodZoneAvg" resultType="double">
+		SELECT ROUND(AVG(FR_SCORE),1) FROM FOOD_REVIEW WHERE FOODZONE_KEY = #{foodZoneKey}
+	</select>
+	
+	<select id="takeOutMenuAll" resultMap="TakeOutResultMap">
+		SELECT * FROM TAKEOUTMENU WHERE FOODZONE_KEY=#{foodZoneKey}
+	</select>
+	
+	<select id="searchList" resultMap="FoodZoneResultMap">
+		SELECT * FROM FOODZONE 
+		<where>
+			<if test="searchCondition.toString() == '맛집이름'">
+				FOODZONE_NAME LIKE '%' || #{searchValue} || '%'
+			</if>
+			
+			<if test="searchCondition.toString() == '주소'">
+				FOODZONE_ADDRESS LIKE '%' || #{searchValue} || '%'
+			</if>
+		</where>
+	</select>
+	
+	<select id="getFoodZoneReviewListCount" resultType="int">
+		SELECT COUNT(*) FROM FOOD_REVIEW WHERE FOODZONE_KEY = #{foodZoneKey} 
+	</select>
+	
+	<select id="selectFoodZoneReviewList" resultMap="FoodZoneReviewResultMap">
+		SELECT * FROM FOOD_REVIEW WHERE FOODZONE_KEY = #{foodZoneKey} ORDER BY 6 DESC
+	</select>
+	
+	<update id="foodZoneReviewHits">
+		UPDATE FOOD_REVIEW SET FR_HITS = FR_HITS+1
+		WHERE FR_KEY = #{frKey}
+	</update>
+	
+	
+	<select id="foodZoneReviewDetail" resultMap="FoodZoneReviewResultMap">
+		SELECT * FROM FOOD_REVIEW WHERE FR_KEY = #{frKey}
+	</select>
+	
+	<select id="selectFoodZoneInfoByKey" resultMap="FoodZoneResultMap">
+		SELECT * FROM FOODZONE WHERE FOODZONE_KEY = #{foodZoneKey}
+	</select>
+	
+	<select id="selectTakeOut" resultMap="TakeOutResultMap">
+		SELECT * FROM TAKEOUTMENU WHERE FOODZONE_KEY=#{foodZoneKey} AND TAKEOUT_MENU=#{takeOutMenu}
+	</select>
+	
+	<insert id="insertTakeOut">
+		INSERT INTO TAKEOUT_RESERVE VALUES(SEQ_TOR.NEXTVAL,#{memberId}, #{takeOutKey}, #{torEa}, #{torPrice}, #{torRegDate}, #{torTotalPrice}, #{foodZoneKey})
+	</insert>
+	
+	<insert id="insertFoodZone">
+		INSERT INTO FOOD_REVIEW VALUES(SEQ_FRKEY.NEXTVAL,#{foodZoneKey}, #{frScore}, #{frTitle}, #{frContent}, SYSDATE, #{frHits}, #{frPhoto,jdbcType=VARCHAR}, #{memberId})
+	</insert>
+	
+	<delete id="deleteFoodZoneReview">
+		DELETE FROM FOOD_REVIEW WHERE FR_KEY=#{frKey}
+	</delete>
+	
+	<update id="updateFoodZoneReview">
+		UPDATE FOOD_REVIEW SET FR_SCORE = #{frScore}, FR_TITLE = #{frTitle}, FR_CONTENT = #{frContent}, FR_REGDATE = SYSDATE, FR_PHOTO = #{frPhoto,jdbcType=VARCHAR}, MEMBER_ID = #{memberId} WHERE FR_KEY = #{frKey} 
+	</update>
+	<select id="selectReviewComment" resultMap="foodZoneReviewCommentResultMap">
+		SELECT * FROM FOOD_REVIEW_COMMENT WHERE FR_KEY = #{frKey} ORDER BY FRC_KEY DESC
+	</select>
+	
+	<insert id="insertFoodZoneReviewComment">
+		INSERT INTO FOOD_REVIEW_COMMENT VALUES(SEQ_FRCKEY.NEXTVAL, #{frcContent}, #{frKey}, #{frcWriter}, SYSDATE)
+	</insert>
+	
+	<delete id="deleteReviewComment">
+		DELETE FROM FOOD_REVIEW_COMMENT WHERE FRC_KEY = #{frcKey}
+	</delete>
+	
+	<select id="selectTakeOutReserve" resultMap="TorResultMap">
+      SELECT O.TAKEOUT_MENU, R.TOR_EA, R.TOR_PRICE, R.TOR_REGDATE, R.TOR_TOTALPRICE FROM (SELECT * FROM TAKEOUT_RESERVE WHERE MEMBER_ID = #{memberId}) R JOIN TAKEOUTMENU O
+      ON R.TAKEOUT_KEY = O.TAKEOUT_KEY
+   </select>
+   
+   <select id="searchBoardListCount" resultType="int">
+   SELECT COUNT(*) FROM FOOD_REVIEW
+   <where>FOODZONE_KEY = #{foodZoneKey} AND
+   		<if test="searchCondition.toString() == '제목'">
+				FR_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				FR_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+   </where>
+   </select>
+   
+   <select id="selectBoardList" resultMap="FoodZoneReviewResultMap">
+   	SELECT * FROM FOOD_REVIEW
+		<where> FOODZONE_KEY = #{foodZoneKey} AND
+			<if test="searchCondition.toString() == '제목'">
+				FR_TITLE LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '내용'">
+				FR_CONTENT LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '작성자'">
+				MEMBER_ID LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+		ORDER BY FR_KEY DESC
+   </select>
+   
+   <insert id="adminInsertFoodZone">
+		INSERT INTO FOODZONE VALUES(SEQ_FZKEY.NEXTVAL, #{foodZoneName}, #{foodZoneAddress}, #{foodZoneGeoCode}, #{foodZonePhone}, #{foodZoneImage}, #{foodZoneEtc}, 0.0, #{takeOutStatus})
+	</insert>
+	
+	<select id="searchMenuFoodZoneList" resultMap="FoodZoneResultMap">
+		SELECT * FROM FOODZONE WHERE FOODZONE_NAME LIKE '%' || #{foodZoneName} || '%' AND TAKEOUT_STATUS = 'Y'
+	</select>
+	
+	<insert id="insertMenu">
+		INSERT INTO TAKEOUTMENU VALUES(SEQ_TK.NEXTVAL,#{foodZoneKey}, #{takeOutMenu}, #{takeOutMenuPrice}, #{takeOutMenuPhoto})
+	</insert>
+	
+	<select id="getReviewListCount" resultType="int">
+		SELECT COUNT(*) FROM FOODZONE
+		<where>
+			<if test="searchCondition.toString() == '맛집이름'">
+				FOODZONE_NAME LIKE '%' || #{searchValue} || '%' 
+			</if>
+			<if test="searchCondition.toString() == '주소'">
+				FOODZONE_ADDRESS LIKE '%' || #{searchValue} || '%' 
+			</if>
+		</where>
+		
+	</select>
+</mapper>
